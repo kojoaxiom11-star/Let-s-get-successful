@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3f5d3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Week">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>My Week — Schedule App</title>
+<style>
+  :root{
+    --bg: #f6f4ee;
+    --ink: #26301f;
+    --soil: #8a7f6b;
+    --leaf: #3f5d3a;
+    --leaf-dark: #2e4629;
+    --line: #e2ddcf;
+    --card: #ffffff;
+    --class-c: #a39a86;
+    --study-c: #3f5d3a;
+    --break-c: #5b7f9e;
+    --church-c: #8a5ba6;
+    --rehearsal-c: #c98a3e;
+    --music-c: #5b5ba6;
+    --research-c: #2f8f6f;
+    --wake-c: #c0564a;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    padding:0 0 60px;
+  }
+  .wrap{ max-width:640px; margin:0 auto; padding:20px 16px 0; }
+  header{ margin-bottom:14px; }
+  h1{
+    font-family:'Georgia', serif;
+    font-size:1.5rem;
+    margin:0 0 2px;
+    color:var(--leaf-dark);
+  }
+  .sub{ font-size:0.72rem; color:var(--soil); text-transform:uppercase; letter-spacing:1px; }
+
+  .progress-wrap{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    margin:14px 0;
+  }
+  .progress-label{ display:flex; justify-content:space-between; font-size:0.75rem; color:var(--soil); margin-bottom:6px; }
+  .progress-bar{ height:8px; background:#eee; border-radius:6px; overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--leaf); width:0%; transition:width 0.3s; }
+
+  .motivate-row{ display:flex; gap:8px; margin:10px 0; }
+  .streak-card{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; text-align:center;
+  }
+  .streak-num{ font-size:1.4rem; font-weight:800; color:var(--leaf-dark); line-height:1; }
+  .streak-label{ font-size:0.62rem; color:var(--soil); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+  .quote-card{
+    flex:2; background:linear-gradient(135deg, var(--leaf) 0%, var(--leaf-dark) 100%);
+    color:white; border-radius:10px; padding:10px 14px; display:flex; align-items:center;
+    font-size:0.76rem; font-style:italic; line-height:1.3;
+  }
+  .celebrate{
+    display:none;
+    background:#fff8e6; border:1px solid #e8c368; color:#8a6d1a;
+    border-radius:10px; padding:10px 14px; margin:10px 0;
+    font-size:0.82rem; font-weight:700; text-align:center;
+  }
+  .celebrate.show{ display:block; animation:pop 0.4s ease; }
+  @keyframes pop{ 0%{transform:scale(0.9);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+
+  .goals-toggle{
+    display:block; width:100%; margin:4px 0 12px;
+    background:linear-gradient(135deg, var(--rehearsal-c) 0%, #a3763f 100%);
+    color:white; border:none; border-radius:10px;
+    padding:10px 14px; font-size:0.82rem; font-weight:700;
+    cursor:pointer; text-align:center;
+  }
+  .roadmap{ display:none; }
+  .roadmap.show{ display:block; }
+
+  .history-toggle{
+    display:block; width:100%; margin:4px 0 10px;
+    background:linear-gradient(135deg, var(--church-c) 0%, #6b4a86 100%);
+    color:white; border:none; border-radius:10px;
+    padding:10px 14px; font-size:0.82rem; font-weight:700;
+    cursor:pointer; text-align:center;
+  }
+  .history{ display:none; }
+  .history.show{ display:block; }
+  .stat-row{ display:flex; gap:8px; margin-bottom:12px; }
+  .stat-card{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:10px; text-align:center;
+  }
+  .stat-num{ font-size:1.25rem; font-weight:800; color:var(--leaf-dark); line-height:1; }
+  .stat-label{ font-size:0.6rem; color:var(--soil); text-transform:uppercase; letter-spacing:0.4px; margin-top:3px; }
+  .hist-list{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .hist-row{ display:flex; align-items:center; gap:10px; padding:6px 0; }
+  .hist-date{ font-size:0.68rem; color:var(--soil); width:78px; flex-shrink:0; }
+  .hist-bar-bg{ flex:1; height:14px; background:#eee; border-radius:7px; overflow:hidden; }
+  .hist-bar-fill{ height:100%; border-radius:7px; }
+  .hist-pct{ font-size:0.68rem; font-weight:700; color:var(--ink); width:34px; text-align:right; flex-shrink:0; }
+  .hist-empty{ font-size:0.78rem; color:var(--soil); text-align:center; padding:20px 0; }
+  .rm-intro{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; margin-bottom:12px; font-size:0.8rem; color:var(--ink); line-height:1.4;
+  }
+  .rm-stage{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--leaf);
+    border-radius:10px; padding:11px 13px; margin-bottom:8px;
+  }
+  .rm-stage.branch{ border-left-color:var(--music-c); }
+  .rm-when{ font-size:0.65rem; color:var(--soil); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .rm-title{ font-size:0.86rem; font-weight:800; margin-top:2px; color:var(--leaf-dark); }
+  .rm-desc{ font-size:0.76rem; color:var(--ink); margin-top:3px; line-height:1.35; }
+  .rm-branch-head{
+    font-size:0.72rem; font-weight:800; color:var(--music-c); text-transform:uppercase;
+    letter-spacing:0.5px; margin:14px 0 6px;
+  }
+
+  .tabs{
+    display:flex;
+    overflow-x:auto;
+    gap:6px;
+    padding:4px 0 10px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tab{
+    flex:0 0 auto;
+    padding:8px 14px;
+    border-radius:20px;
+    background:var(--card);
+    border:1px solid var(--line);
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--soil);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tab.active{ background:var(--leaf); color:white; border-color:var(--leaf); }
+  .tab .dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:#c0564a; margin-left:5px; vertical-align:middle;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 13px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    border-left:4px solid var(--class-c);
+    transition: opacity 0.2s;
+  }
+  .card.done{ opacity:0.45; }
+  .card.done .what{ text-decoration:line-through; }
+  .card input[type=checkbox]{
+    margin-top:3px;
+    width:18px; height:18px;
+    accent-color: var(--leaf);
+    flex-shrink:0;
+    cursor:pointer;
+  }
+  .card .body{ flex:1; min-width:0; }
+  .time{ font-size:0.68rem; font-weight:700; color:var(--soil); }
+  .what{ font-size:0.86rem; font-weight:700; margin-top:1px; }
+  .meta{ font-size:0.72rem; color:var(--soil); margin-top:1px; }
+  .tag{
+    display:inline-block; font-size:0.58rem; text-transform:uppercase;
+    letter-spacing:0.4px; padding:1px 6px; border-radius:3px; margin-top:4px; color:white;
+  }
+
+  .type-class{ border-left-color: var(--class-c); }
+  .type-study{ border-left-color: var(--study-c); }
+  .type-break{ border-left-color: var(--break-c); }
+  .type-church{ border-left-color: var(--church-c); }
+  .type-rehearsal{ border-left-color: var(--rehearsal-c); }
+  .type-music{ border-left-color: var(--music-c); }
+  .type-research{ border-left-color: var(--research-c); }
+  .type-wake{ border-left-color: var(--wake-c); }
+
+  .swap-btn{
+    margin-top:6px;
+    font-size:0.66rem;
+    font-weight:700;
+    color:var(--music-c);
+    background:none;
+    border:1px solid var(--music-c);
+    border-radius:12px;
+    padding:2px 9px;
+    cursor:pointer;
+  }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px;
+    font-size:0.66rem; color:var(--soil);
+    margin:18px 0 8px;
+  }
+  .legend span{ display:flex; align-items:center; gap:4px; }
+  .sw{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+
+  .reset-btn{
+    display:block;
+    margin:22px auto 0;
+    font-size:0.72rem;
+    color:var(--soil);
+    background:none;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:6px 14px;
+    cursor:pointer;
+  }
+  .loading{ text-align:center; color:var(--soil); font-size:0.8rem; padding:30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>My Week</h1>
+    <div class="sub">Tap to check off &middot; progress saves automatically</div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress-label"><span id="progress-day-label">Today</span><span id="progress-count">0/0</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="motivate-row">
+    <div class="streak-card">
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-label">day streak 🔥</div>
+    </div>
+    <div class="quote-card" id="quote-card">Loading…</div>
+  </div>
+
+  <div class="celebrate" id="celebrate">🎉 Day complete — nice work!</div>
+
+  <button class="goals-toggle" id="goals-toggle">🎯 My Long Game — Gene Editing / Bioinformatics / Forensic DNA</button>
+  <button class="history-toggle" id="history-toggle">📊 My Progress Over Time</button>
+
+  <div class="history" id="history">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Current streak</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-best">0</div><div class="stat-label">Best streak</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-avg">0%</div><div class="stat-label">Avg. completion</div></div>
+    </div>
+    <div class="hist-list" id="hist-list">
+      <div class="hist-empty">No days tracked yet — check off a few tasks today and come back!</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="cards"><div class="loading">Loading…</div></div>
+
+  <div class="roadmap" id="roadmap">
+    <div class="rm-intro">
+      You're not behind — nobody goes from a BSc straight to "gene editing scientist." Everyone in these fields follows some version of this staircase. This is just here so the dream has a shape, not just weight.
+    </div>
+
+    <div class="rm-stage">
+      <div class="rm-when">Now — Year(s) in BSc Agric. Biotech</div>
+      <div class="rm-title">Build the real foundation</div>
+      <div class="rm-desc">Lean into genetics, molecular biology &amp; statistics electives — these matter more for your dream than the "agric" parts. Get comfortable with lab technique: PCR, sequencing, cell culture.</div>
+    </div>
+
+    <div class="rm-stage">
+      <div class="rm-when">Alongside classes, ongoing</div>
+      <div class="rm-title">Self-teach bioinformatics</div>
+      <div class="rm-desc">Your degree won't cover this deeply, but it's learnable on your own: Python or R, basic stats, Coursera's Bioinformatics Specialization, practice problems on Rosalind.info. A few hours a week compounds fast.</div>
+    </div>
+
+    <div class="rm-stage">
+      <div class="rm-when">Before graduation</div>
+      <div class="rm-title">Get real research/lab experience</div>
+      <div class="rm-desc">Ask a lecturer if you can assist with genetics or molecular research — even unpaid. This matters more than grades alone for grad school or forensic/genetics jobs.</div>
+    </div>
+
+    <div class="rm-branch-head">Then it branches — pick based on what pulls you most</div>
+
+    <div class="rm-stage branch">
+      <div class="rm-when">Postgrad · Gene editing</div>
+      <div class="rm-title">MSc/PhD in Molecular Biology, Genetics, or Biotechnology</div>
+      <div class="rm-desc">Straight continuation of your current path, deepened. CRISPR and gene-editing work almost always sits inside a research lab at this level.</div>
+    </div>
+
+    <div class="rm-stage branch">
+      <div class="rm-when">Postgrad · Bioinformatician</div>
+      <div class="rm-title">MSc in Bioinformatics or Computational Biology</div>
+      <div class="rm-desc">Many programs accept a biology background plus self-taught coding — which is exactly what you'll already have if you keep at the Python/R practice now.</div>
+    </div>
+
+    <div class="rm-stage branch">
+      <div class="rm-when">Postgrad · Forensic / Criminal DNA expert</div>
+      <div class="rm-title">MSc in Forensic Science or Forensic Genetics</div>
+      <div class="rm-desc">A distinct specialization — worth researching specific programs early, including options in Ghana and abroad, since not every university offers this directly.</div>
+    </div>
+
+    <div class="rm-stage">
+      <div class="rm-when">6–10 years out — normal, not slow</div>
+      <div class="rm-title">Working scientist / expert</div>
+      <div class="rm-desc">This timeline is standard for everyone in these fields, not a sign you're behind. Every step you're taking now — even a single revision session — is already part of this staircase.</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--class-c)"></span>Class</span>
+    <span><span class="sw" style="background:var(--study-c)"></span>Revision</span>
+    <span><span class="sw" style="background:var(--break-c)"></span>Break</span>
+    <span><span class="sw" style="background:var(--church-c)"></span>Church</span>
+    <span><span class="sw" style="background:var(--rehearsal-c)"></span>Rehearsal</span>
+    <span><span class="sw" style="background:var(--music-c)"></span>Music theory</span>
+    <span><span class="sw" style="background:var(--research-c)"></span>Research reading</span>
+    <span><span class="sw" style="background:var(--wake-c)"></span>Wake-up</span>
+  </div>
+
+  <button class="reset-btn" id="reset-btn">Reset this day's checks</button>
+</div>
+
+<script>
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+const SCHEDULE = {
+  Monday: [
+    {t:"6:00 – 7:00 AM", w:"Wake up, breakfast", type:"break"},
+    {t:"7:00 – 8:30 AM", w:"Revise: CS 152", m:"Soil Chem. & Microbiology · class tonight, 5–7 PM", type:"study"},
+    {t:"8:30 – 9:00 AM", w:"Break — social media", type:"break"},
+    {t:"9:00 – 10:30 AM", w:"Revise: AGB 154", m:"Molecular Biology of the Cell", type:"study"},
+    {t:"10:30 – 11:00 AM", w:"Break", type:"break"},
+    {t:"11:00 AM – 12:30 PM", w:"Revise: HORT 152", type:"study"},
+    {t:"12:30 – 1:30 PM", w:"Lunch break", type:"break"},
+    {t:"1:30 – 3:00 PM", w:"Revise: AGEC 154", type:"study"},
+    {t:"3:00 – 4:00 PM", w:"Break — free time / social media", type:"break"},
+    {t:"4:00 – 5:00 PM", w:"Get ready, head to class", type:"break"},
+    {t:"5:00 – 7:00 PM", w:"CS 152 lecture", m:"NCB GF · (B+AGB)", type:"class"},
+    {t:"7:00 – 8:55 PM", w:"Free — dinner, rest, social media", type:"break"}
+  ],
+  Tuesday: [
+    {t:"6:00 – 7:00 AM", w:"Wake up, breakfast", type:"break"},
+    {t:"7:00 – 8:00 AM", w:"Wake by 7 if in CS 152 Group B1", m:"Otherwise: light study or rest", type:"wake"},
+    {t:"8:00 – 9:55 AM", w:"🎵 Music theory & sight-reading", m:"CS 152 (B1) practical rarely runs — swap back if it's on", type:"music", swappable:true, altW:"CS 152 (B1 practical)", altM:"Practical is on this week"},
+    {t:"9:55 – 10:30 AM", w:"Break", type:"break"},
+    {t:"10:30 AM – 12:25 PM", w:"Revise: ENGL 158", type:"study"},
+    {t:"12:25 – 1:00 PM", w:"Lunch break", type:"break"},
+    {t:"1:00 – 2:55 PM", w:"AGB 154 Molecular Biology", m:"NCB TF", type:"class"},
+    {t:"2:55 – 4:00 PM", w:"🔬 Research reading", m:"Skim one paper/review on agri-biotech", type:"research"},
+    {t:"4:00 – 5:00 PM", w:"HORT 152 (online)", type:"class"},
+    {t:"5:00 – 6:00 PM", w:"Dinner, get ready for Mass", type:"break"},
+    {t:"6:00 – 9:00 PM", w:"🕊 Student Mass", type:"church"}
+  ],
+  Wednesday: [
+    {t:"6:00 – 7:00 AM", w:"Wake up, breakfast", type:"break"},
+    {t:"7:00 – 8:30 AM", w:"Revise: AGEC 154", m:"Pre-class prep · 3hr class today", type:"study"},
+    {t:"8:30 – 9:00 AM", w:"Break", type:"break"},
+    {t:"9:00 – 10:00 AM", w:"Revise: CS 154", m:"Plant Physiology", type:"study"},
+    {t:"10:00 AM – 1:00 PM", w:"AGEC 154 Basic Stats", m:"NCB TF · 3 hrs", type:"class"},
+    {t:"1:00 – 2:00 PM", w:"Lunch break", type:"break"},
+    {t:"2:00 – 3:30 PM", w:"Revise: AGEC 154", m:"Post-class reinforcement", type:"study"},
+    {t:"3:30 – 4:00 PM", w:"Break — social media", type:"break"},
+    {t:"4:00 – 6:00 PM", w:"🎵 Music theory & sight-reading", m:"CS 152 (B2) practical rarely runs — swap back if it's on", type:"music", swappable:true, altW:"CS 152 (B2 practical)", altM:"Practical is on this week"},
+    {t:"6:00 – 8:00 PM", w:"🎶 Rehearsal", type:"rehearsal"},
+    {t:"8:00 – 8:55 PM", w:"Wind down", type:"break"}
+  ],
+  Thursday: [
+    {t:"6:00 – 7:00 AM", w:"Wake up, breakfast", type:"wake"},
+    {t:"7:00 – 8:00 AM", w:"⏰ Light revise: CS 156", m:"1 hr before HORT 152", type:"study"},
+    {t:"8:00 – 10:00 AM", w:"HORT 152 lecture", m:"EH 201", type:"class"},
+    {t:"10:00 – 11:00 AM", w:"Revise: ENGL 158", type:"study"},
+    {t:"11:00 AM – 1:00 PM", w:"AGEC 152 Basic Economics", m:"NCB GF", type:"class"},
+    {t:"1:00 – 2:00 PM", w:"Lunch break", type:"break"},
+    {t:"2:00 – 3:00 PM", w:"Revise: CS 154", m:"Extra pass — 3hr lab Friday", type:"study"},
+    {t:"3:00 – 5:00 PM", w:"CS 156 Mycology", m:"NCB GF", type:"class"},
+    {t:"5:00 – 5:20 PM", w:"Quick break", type:"break"},
+    {t:"5:20 – 7:20 PM", w:"ENGL 158", m:"NBB 5", type:"class"},
+    {t:"7:20 – 8:55 PM", w:"Free — no studying tonight", m:"Brain's done after ENGL 158, rest instead", type:"break"}
+  ],
+  Friday: [
+    {t:"6:00 – 7:00 AM", w:"⏰ Wake up 6:00 AM", m:"1 hr before CS 154 (7:00 AM)", type:"wake"},
+    {t:"7:00 – 10:00 AM", w:"CS 154 Plant Physiology", m:"Soil Sci. Lab", type:"class"},
+    {t:"10:00 – 10:30 AM", w:"Break", type:"break"},
+    {t:"10:30 AM – 12:00 PM", w:"Revise: CS 154", m:"Post-lab reinforcement", type:"study"},
+    {t:"12:00 – 1:00 PM", w:"Lunch break", type:"break"},
+    {t:"1:00 – 3:00 PM", w:"Revise: AGEC 154 / CS 152", m:"Priority rotation — pick weaker of the two", type:"study"},
+    {t:"3:00 – 4:00 PM", w:"Break — free time / social media", type:"break"},
+    {t:"4:00 – 6:00 PM", w:"🎵 Music theory & sight-reading", m:"CS 152 (B3) practical rarely runs — swap back if it's on", type:"music", swappable:true, altW:"CS 152 (B3 practical)", altM:"Practical is on this week"},
+    {t:"6:00 – 8:00 PM", w:"🎶 Rehearsal", type:"rehearsal"},
+    {t:"8:00 – 8:55 PM", w:"Wind down", type:"break"}
+  ],
+  Saturday: [
+    {t:"Before 7:00 AM", w:"⏰ Wake up early", m:"Be at church before 7:00 AM", type:"wake"},
+    {t:"7:00 – 8:30 AM", w:"🕊 Morning Mass", m:"Adjust time as needed", type:"church"},
+    {t:"8:30 – 10:00 AM", w:"Possible rehearsal", m:"Depends on the week", type:"rehearsal"},
+    {t:"10:00 – 11:00 AM", w:"Breakfast / rest", type:"break"},
+    {t:"11:00 AM – 12:00 PM", w:"Priority review: CS 152 / AGEC 154 / CS 154", m:"Optional — keep it light, rotate weekly", type:"study"},
+    {t:"12:00 – 1:00 PM", w:"🔬 Research reading", m:"Read + jot 3 sentences on what you learned", type:"research"},
+    {t:"1:00 PM onward", w:"Free — rest, errands, social time", type:"break"}
+  ]
+};
+
+const STORAGE_PREFIX = "sched2026:";
+let currentDay = DAYS[new Date().getDay()===0?5:new Date().getDay()-1] || "Monday";
+let swapState = {};
+let checkState = {};
+let streakLog = {}; // { "2026-08-03": 92 } percentage by real date
+let cancelState = {}; // key: day-index -> bool (true = class cancelled that week)
+
+const QUOTES = [
+  "You survived losing your brother at seven. That's not weakness sitting in you — it's proof of how much you can carry and still stand.",
+  "Your mother builds with what she has. You're doing the same today, one revision session at a time.",
+  "Being the one who has to 'make it' wasn't a job you applied for. You can carry it without it crushing you.",
+  "One unfinished day doesn't erase the scientist you're building toward. Tomorrow still counts.",
+  "Fear of poverty is not the same as poverty arriving. Today's flashcards are tomorrow's lab, are the degree after that.",
+  "Your brothers are watching you become someone — not perfect, just present. Some days, that's already enough.",
+  "The father who left doesn't get to write your story. You're writing it yourself, class by class.",
+  "Every base pair you learn is one step closer to the lab coat you picture for yourself.",
+  "Choir taught you discipline before your degree did. The same voice that holds a note can hold a study plan.",
+  "You don't owe anyone a version of yourself that never rests. Rested is still moving forward.",
+  "The forensic scientist you want to become started exactly where you are — unsure, tired, still showing up.",
+  "Not every day will feel productive. That's not failure. That's being human while carrying a lot.",
+  "You're allowed to want a good life for yourself, not only for your family. Both can be true at once.",
+  "Small steps compound — today's revision is next year's lab skill, is five years from now's expertise.",
+  "The load feels lighter carried one day at a time, not all at once, not all today.",
+  "Nobody becomes a bioinformatician overnight. Not you, not anyone. Consistency is the whole secret.",
+  "Your mother's sacrifice isn't a debt you repay with perfection. It's love — let it be enough as it is.",
+  "The fear that you'll fail is proof you care. Just don't let it decide the outcome for you.",
+  "You're the guy who built himself an app just to keep going. That's not nothing — that's real fight.",
+  "Whatever happened before you, whatever's expected of you now — you still get to decide who you become next."
+];
+
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function dayOfYear(){
+  const d = new Date();
+  const start = new Date(d.getFullYear(),0,0);
+  return Math.floor((d - start) / 86400000);
+}
+
+async function loadState(){
+  try{
+    const v = localStorage.getItem(STORAGE_PREFIX + "checks");
+    checkState = v ? JSON.parse(v) : {};
+  }catch(e){ checkState = {}; }
+  try{
+    const v2 = localStorage.getItem(STORAGE_PREFIX + "swaps");
+    swapState = v2 ? JSON.parse(v2) : {};
+  }catch(e){ swapState = {}; }
+  try{
+    const v3 = localStorage.getItem(STORAGE_PREFIX + "streaklog");
+    streakLog = v3 ? JSON.parse(v3) : {};
+  }catch(e){ streakLog = {}; }
+  try{
+    const v4 = localStorage.getItem(STORAGE_PREFIX + "cancels");
+    cancelState = v4 ? JSON.parse(v4) : {};
+  }catch(e){ cancelState = {}; }
+}
+
+async function saveChecks(){
+  try{ localStorage.setItem(STORAGE_PREFIX + "checks", JSON.stringify(checkState)); }catch(e){}
+}
+async function saveSwaps(){
+  try{ localStorage.setItem(STORAGE_PREFIX + "swaps", JSON.stringify(swapState)); }catch(e){}
+}
+async function saveStreakLog(){
+  try{ localStorage.setItem(STORAGE_PREFIX + "streaklog", JSON.stringify(streakLog)); }catch(e){}
+}
+async function saveCancels(){
+  try{ localStorage.setItem(STORAGE_PREFIX + "cancels", JSON.stringify(cancelState)); }catch(e){}
+}
+
+function computeStreak(){
+  let streak = 0;
+  let d = new Date();
+  // if today isn't >=80% yet, start counting from yesterday so an unfinished
+  // today doesn't wrongly zero out the streak
+  const tKey = todayKey();
+  if(!(streakLog[tKey] >= 80)){
+    d.setDate(d.getDate()-1);
+  }
+  while(true){
+    const key = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    if(streakLog[key] >= 80){
+      streak++;
+      d.setDate(d.getDate()-1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function computeBestStreak(){
+  const keys = Object.keys(streakLog).sort();
+  let best = 0, run = 0, prevDate = null;
+  keys.forEach(k=>{
+    if(streakLog[k] >= 80){
+      const d = new Date(k + "T00:00:00");
+      if(prevDate){
+        const diff = Math.round((d - prevDate) / 86400000);
+        run = (diff === 1) ? run + 1 : 1;
+      } else {
+        run = 1;
+      }
+      best = Math.max(best, run);
+      prevDate = d;
+    } else {
+      run = 0;
+      prevDate = null;
+    }
+  });
+  return best;
+}
+
+function renderHistory(){
+  const entries = Object.entries(streakLog).sort((a,b)=> b[0].localeCompare(a[0])); // newest first
+  document.getElementById("stat-streak").textContent = computeStreak();
+  document.getElementById("stat-best").textContent = computeBestStreak();
+
+  const avg = entries.length
+    ? Math.round(entries.reduce((s,[,v])=>s+v,0) / entries.length)
+    : 0;
+  document.getElementById("stat-avg").textContent = avg + "%";
+
+  const list = document.getElementById("hist-list");
+  if(entries.length === 0){
+    list.innerHTML = '<div class="hist-empty">No days tracked yet — check off a few tasks today and come back!</div>';
+    return;
+  }
+  const recent = entries.slice(0, 21); // last 3 weeks
+  list.innerHTML = recent.map(([date, pct])=>{
+    const d = new Date(date + "T00:00:00");
+    const label = d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+    const color = pct >= 80 ? "var(--study-c)" : pct >= 50 ? "var(--rehearsal-c)" : "var(--wake-c)";
+    return `<div class="hist-row">
+      <div class="hist-date">${label}</div>
+      <div class="hist-bar-bg"><div class="hist-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      <div class="hist-pct">${pct}%</div>
+    </div>`;
+  }).join("");
+}
+
+function renderMotivation(pctToday){
+  document.getElementById("quote-card").textContent = QUOTES[dayOfYear() % QUOTES.length];
+  document.getElementById("streak-num").textContent = computeStreak();
+
+  const celebrate = document.getElementById("celebrate");
+  const REAL_TODAY = DAYS[new Date().getDay()===0?5:new Date().getDay()-1];
+  if(currentDay === REAL_TODAY && pctToday === 100){
+    celebrate.classList.add("show");
+  } else {
+    celebrate.classList.remove("show");
+  }
+}
+
+
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  DAYS.forEach(day=>{
+    const btn = document.createElement("div");
+    btn.className = "tab" + (day===currentDay ? " active" : "");
+    btn.textContent = day.slice(0,3);
+    btn.onclick = ()=>{ currentDay = day; renderTabs(); renderCards(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderCards(){
+  const container = document.getElementById("cards");
+  container.innerHTML = "";
+  const items = SCHEDULE[currentDay];
+  let doneCount = 0;
+
+  const CANCELABLE_TYPES = ["class", "church", "rehearsal"];
+
+  items.forEach((item, idx)=>{
+    const key = currentDay + "-" + idx;
+    const swapped = !!swapState[key];
+    const isDone = !!checkState[key];
+    const isCancelled = CANCELABLE_TYPES.includes(item.type) && !!cancelState[key];
+    if(isDone) doneCount++;
+
+    const displayW = isCancelled
+      ? "Free — " + item.w + " cancelled"
+      : (item.swappable && swapped) ? item.altW : item.w;
+    const displayM = isCancelled
+      ? "Use this time freely, or catch up on revision"
+      : (item.swappable && swapped) ? item.altM : item.m;
+
+    const card = document.createElement("div");
+    const cardType = isCancelled ? "break" : item.type;
+    card.className = "card type-" + cardType + (isDone ? " done" : "");
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = isDone;
+    cb.onchange = ()=>{
+      checkState[key] = cb.checked;
+      saveChecks();
+      renderCards();
+    };
+
+    const body = document.createElement("div");
+    body.className = "body";
+    body.innerHTML = `
+      <div class="time">${item.t}</div>
+      <div class="what">${displayW}</div>
+      ${displayM ? `<div class="meta">${displayM}</div>` : ""}
+    `;
+
+    if(item.swappable){
+      const swapBtn = document.createElement("button");
+      swapBtn.className = "swap-btn";
+      swapBtn.textContent = swapped ? "↺ Practical isn't on — back to music" : "⇄ Practical is on this week";
+      swapBtn.onclick = (e)=>{
+        e.stopPropagation();
+        swapState[key] = !swapped;
+        saveSwaps();
+        renderCards();
+      };
+      body.appendChild(swapBtn);
+    }
+
+    if(CANCELABLE_TYPES.includes(item.type)){
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "swap-btn";
+      cancelBtn.style.color = isCancelled ? "var(--study-c)" : "var(--wake-c)";
+      cancelBtn.style.borderColor = isCancelled ? "var(--study-c)" : "var(--wake-c)";
+      cancelBtn.textContent = isCancelled ? "↺ It's actually on this week" : "🚫 Mark as cancelled";
+      cancelBtn.onclick = (e)=>{
+        e.stopPropagation();
+        cancelState[key] = !isCancelled;
+        saveCancels();
+        renderCards();
+      };
+      body.appendChild(cancelBtn);
+    }
+
+    card.appendChild(cb);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+
+  document.getElementById("progress-day-label").textContent = currentDay;
+  document.getElementById("progress-count").textContent = doneCount + "/" + items.length;
+  const pct = items.length ? Math.round((doneCount/items.length)*100) : 0;
+  document.getElementById("progress-fill").style.width = pct + "%";
+
+  const REAL_TODAY = DAYS[new Date().getDay()===0?5:new Date().getDay()-1];
+  if(currentDay === REAL_TODAY){
+    streakLog[todayKey()] = pct;
+    saveStreakLog();
+  }
+  renderMotivation(pct);
+}
+
+document.getElementById("reset-btn").onclick = ()=>{
+  Object.keys(checkState).forEach(k=>{
+    if(k.startsWith(currentDay+"-")) delete checkState[k];
+  });
+  Object.keys(cancelState).forEach(k=>{
+    if(k.startsWith(currentDay+"-")) delete cancelState[k];
+  });
+  saveChecks();
+  saveCancels();
+  renderCards();
+};
+
+let currentView = "day"; // "day" | "goals" | "history"
+
+function applyView(){
+  const isGoals = currentView === "goals";
+  const isHistory = currentView === "history";
+  const isDay = currentView === "day";
+
+  document.getElementById("roadmap").classList.toggle("show", isGoals);
+  document.getElementById("history").classList.toggle("show", isHistory);
+  document.getElementById("tabs").style.display = isDay ? "flex" : "none";
+  document.getElementById("cards").style.display = isDay ? "block" : "none";
+  document.getElementById("reset-btn").style.display = isDay ? "block" : "none";
+  document.querySelector(".progress-wrap").style.display = isDay ? "block" : "none";
+  document.querySelector(".motivate-row").style.display = isDay ? "flex" : "none";
+
+  document.getElementById("goals-toggle").textContent = isGoals
+    ? "← Back to today's schedule"
+    : "🎯 My Long Game — Gene Editing / Bioinformatics / Forensic DNA";
+  document.getElementById("history-toggle").textContent = isHistory
+    ? "← Back to today's schedule"
+    : "📊 My Progress Over Time";
+
+  if(isHistory) renderHistory();
+}
+
+document.getElementById("goals-toggle").onclick = ()=>{
+  currentView = (currentView === "goals") ? "day" : "goals";
+  applyView();
+};
+document.getElementById("history-toggle").onclick = ()=>{
+  currentView = (currentView === "history") ? "day" : "history";
+  applyView();
+};
+
+(async ()=>{
+  await loadState();
+  renderTabs();
+  renderCards();
+})();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
